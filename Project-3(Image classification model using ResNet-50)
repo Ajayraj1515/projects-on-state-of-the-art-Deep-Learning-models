@@ -1,0 +1,74 @@
+#First, we'll need to install the necessary packages
+!pip install torch torchvision
+
+#Next, we'll import the required libraries
+import torch
+import torch.nn as nn
+import torchvision
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+
+#We'll also need to download the CIFAR-10 dataset, which consists of 60,000 32x32 color images in 10 classes
+train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transforms.ToTensor())
+test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transforms.ToTensor())
+
+#Now we can define the ResNet-50 model
+class ResNet50(nn.Module):
+    def __init__(self, num_classes=10):
+        super(ResNet50, self).__init__()
+        self.resnet50 = torchvision.models.resnet50(pretrained=True)
+        self.fc = nn.Linear(2048, num_classes)
+
+    def forward(self, x):
+        out = self.resnet50(x)
+        out = self.fc(out)
+        return out
+        
+#We'll also need to define a data loader to load the dataset
+batch_size = 128
+
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+
+#Now we can define a function to train the model
+def train(model, optimizer, criterion, num_epochs):
+    for epoch in range(num_epochs):
+        running_loss = 0.0
+        for i, (images, labels) in enumerate(train_loader):
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        print('Epoch [{}/{}], Loss: {:.4f}'.format(epoch+1, num_epochs, running_loss / len(train_loader)))
+
+#And finally, we can define a function to test the model
+def test(model):
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for images, labels in test_loader:
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+        print('Accuracy of the network on the test images: {} %'.format(100 * correct / total))
+
+
+#Now we can train and test the model
+model = ResNet50(num_classes=10)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+num_epochs = 10
+train(model, optimizer, criterion, num_epochs)
+test(model)
+
+#The output of this code will show the training loss for each epoch, as well as the accuracy of the
+model on the test images.
+
+#This is just a simple example, but with some tweaks and optimizations, you can build much more sophisticated 
+image classification models using ResNet-50 and other deep learning architectures. With a project like this, 
+you can showcase your skills in deep learning and demonstrate your ability to work with real-world datasets.
