@@ -1,3 +1,48 @@
-First, we'll need to install the necessary packages:
-#!pip install transformers
+#First, we'll need to install the necessary packages
+!pip install transformers
 !pip install torch
+
+#Next, we'll import the required libraries
+
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+
+#We'll also need to download the pre-trained BERT model and tokenizer
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+
+#Now we can define a function to preprocess the text data and convert it to a format that BERT can understand
+
+def preprocess(text):
+    inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
+    return inputs
+
+#We'll also define a function to make predictions using the BERT model
+
+def predict_sentiment(text):
+    inputs = preprocess(text)
+    outputs = model(**inputs)
+    logits = outputs[0]
+    probabilities = torch.softmax(logits, dim=1).tolist()[0]
+    positive_prob = probabilities[1]
+    negative_prob = probabilities[0]
+    if positive_prob > negative_prob:
+        return 'positive'
+    else:
+        return 'negative'
+
+#Now we can use our model to classify some example movie reviews
+
+text = "This movie was fantastic! The acting was superb and the story kept me engaged from beginning to end."
+print(predict_sentiment(text))
+
+text = "I really didn't enjoy this movie. The acting was wooden and the story was predictable."
+print(predict_sentiment(text))
+
+#The output of this code should be
+positive
+negative
+
+
+
